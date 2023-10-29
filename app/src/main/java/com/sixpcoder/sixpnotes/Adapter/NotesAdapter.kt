@@ -99,8 +99,8 @@ class NotesAdapter(private val context: Context,val listener:NotesClickListener)
         notelist.clear()
 
         for (item in fulllist){
-            if (item.title.lowercase().contains(search.lowercase())==true or
-                    item.note.lowercase().contains(search.lowercase())
+            if (item.title?.lowercase()?.contains(search.lowercase())==true or
+                    item.note?.lowercase()!!.contains(search.lowercase())
             ){
                 notelist.add(item)
 
