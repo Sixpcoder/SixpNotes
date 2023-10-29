@@ -1,12 +1,17 @@
+@file:Suppress("DEPRECATION")
+
 package com.sixpcoder.sixpnotes
 
 import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.SearchView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -15,16 +20,21 @@ import com.sixpcoder.sixpnotes.Database.NoteDatabase
 import com.sixpcoder.sixpnotes.Models.Note
 import com.sixpcoder.sixpnotes.Models.NoteViewModel
 import com.sixpcoder.sixpnotes.databinding.ActivityMainBinding
+import com.sixpcoder.sixpnotes.utilities.NOTE
 
-class MainActivity : AppCompatActivity() ,NotesAdapter.NotesClickListener {
+class MainActivity : AppCompatActivity() ,
+    NotesAdapter.NotesClickListener ,
+    PopupMenu.OnMenuItemClickListener{
 
     private  lateinit var binding: ActivityMainBinding
     private lateinit var database: NoteDatabase
     lateinit var viewModel:NoteViewModel
     lateinit var adapter: NotesAdapter
-    lateinit var note:Note
+    lateinit var selnote:Note
 
-    private val updatenote=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){result->
+    private val updatenote=registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult())
+    {result->
         if(result.resultCode==Activity.RESULT_OK){
              val note =result.data?.getSerializableExtra("note") as Note
             if (note!=null){
@@ -61,7 +71,8 @@ class MainActivity : AppCompatActivity() ,NotesAdapter.NotesClickListener {
 
     private fun initui() {
         binding.recview.setHasFixedSize(true)
-        binding.recview.layoutManager=StaggeredGridLayoutManager(2,LinearLayout.VERTICAL)
+        binding.recview.layoutManager=
+            StaggeredGridLayoutManager(2,LinearLayout.VERTICAL)
         adapter= NotesAdapter(this,this)
         binding.recview.adapter=adapter
 
@@ -78,11 +89,13 @@ class MainActivity : AppCompatActivity() ,NotesAdapter.NotesClickListener {
 
         }
         binding.fab.setOnClickListener {
-            val intent = Intent(this,AddNote::class.java)
-            getContent.launch(intent)
+            val intents = Intent(this,AddNote::class.java)
+            getContent.launch(intents)
         }
 
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
+        binding.searchView.setOnQueryTextListener(
+            object :SearchView.OnQueryTextListener,
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
 
                 return false
@@ -99,6 +112,35 @@ class MainActivity : AppCompatActivity() ,NotesAdapter.NotesClickListener {
 
         })
 
+    }
+
+    override fun OnItemClicked(note: Note) {
+        val intent=Intent(this@MainActivity,AddNote::class.java)
+        intent.putExtra(NOTE,note)
+        updatenote.launch(intent)
+
+    }
+
+    override fun OnLongItemClicked(note: Note, cardView: CardView) {
+        selnote=note
+        popupdisplay(cardView)
+
+    }
+
+    private fun popupdisplay(cardView: CardView) {
+        val popup = PopupMenu(this,cardView)
+        popup.setOnMenuItemClickListener(this@MainActivity)
+        popup.inflate(R.menu.pop_up_menu)
+        popup.show()
+    }
+
+    override fun onMenuItemClick(item: MenuItem?): Boolean {
+        if (item?.itemId==R.id.delete){
+            viewModel.delete(selnote)
+            return true
+
+        }
+        return false
     }
 
 
